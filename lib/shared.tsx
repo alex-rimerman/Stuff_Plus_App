@@ -114,7 +114,7 @@ export async function getStuffPlusAPI(
   pitch: PitchInput
 ): Promise<StuffPlusResult> {
   try {
-    const response = await fetch("http://192.168.1.46:8000/predict", {
+    const response = await fetch("https://stuff-plus-app.onrender.com/predict", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(pitch),
