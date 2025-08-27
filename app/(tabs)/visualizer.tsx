@@ -1,9 +1,9 @@
 import { useRouter } from "expo-router";
-import { Button, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { usePitch } from "../../lib/pitch_context";
 
 export default function Visualizer() {
-  const { pitches, clearPitches } = usePitch();
+  const { pitches, clearPitches, removePitch } = usePitch();
   const router = useRouter();
 
   return (
@@ -15,9 +15,29 @@ export default function Visualizer() {
       ) : (
         pitches.map((pitch) => (
           <View key={pitch.id} style={styles.pitchCard}>
+            <View style={styles.cardHeader}>
             <Text style={styles.pitchName}>
-              {pitch.name} ({pitch.pitchType})
+                {pitch.name} ({pitch.pitchType})
             </Text>
+
+            <View style={styles.actions}>
+                <TouchableOpacity
+                onPress={() =>
+                    router.push({
+                    pathname: "/(tabs)/add-pitch",
+                    params: { id: pitch.id },
+                    })
+                }
+                >
+                <Text style={styles.editButton}>Edit</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => removePitch(pitch.id)}>
+                <Text style={styles.removeButton}>✕</Text>
+                </TouchableOpacity>
+            </View>
+          </View>
+
             <Text>Handedness: {pitch.handedness}</Text>
             <Text>Velo: {pitch.release_speed.toFixed(1)} mph</Text>
             <Text>IVB: {pitch.pfx_z.toFixed(1)} in</Text>
@@ -30,10 +50,15 @@ export default function Visualizer() {
         ))
       )}
 
-      <Button
+        <Button
         title="Add Another Pitch"
-        onPress={() => router.push("/(tabs)/add-pitch")}
-      />
+        onPress={() =>
+            router.push({
+            pathname: "/(tabs)/add-pitch",
+            params: { id: null }, // 👈 explicitly say "fresh add"
+            })
+        }
+        />
 
       {pitches.length > 0 && (
         <Button
@@ -71,9 +96,29 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     backgroundColor: "#f9f9f9",
   },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
   pitchName: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 6,
   },
+  removeButton: {
+    color: "red",
+    fontSize: 20,
+    fontWeight: "bold",
+    paddingHorizontal: 5,
+  },
+  actions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8, // space between Edit + X
+  },
+  editButton: {
+    color: "blue",
+    fontWeight: "bold",
+  },  
 });

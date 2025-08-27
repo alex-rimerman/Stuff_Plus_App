@@ -1,5 +1,4 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
 import { Platform } from 'react-native';
 
 import { HapticTab } from '@/components/HapticTab';
@@ -34,12 +33,33 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="add-pitch"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "Add Pitch",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol
+              size={28}
+              name="plus.circle.fill"
+              color={color}
+            />
+          ),
+        }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            // ensure Add Pitch is always fresh
+            e.preventDefault();
+            navigation.navigate("add-pitch", {}); // 👈 force no params
+          },
+        })}
+      />
+      <Tabs.Screen
+        name="visualizer"
+        options={{
+          title: 'Visualizer',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.bar.fill" color={color} />,
         }}
       />
     </Tabs>
+    
   );
 }

@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Stuff_Plus_app",
-    "slug": "Stuff_Plus_app",
-    "version": "1.0.0",
+    "name": "Stuff Plus App",
+    "slug": "Stuff_Plus_App",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "stuffplusapp",

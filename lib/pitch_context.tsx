@@ -15,6 +15,7 @@ type PitchContextType = {
   pitches: Pitch[];
   addPitch: (pitch: Pitch) => void;
   removePitch: (id: string) => void;
+  updatePitch: (id: string, updatedPitch: Pitch) => void;
   clearPitches: () => void;
 };
 
@@ -33,12 +34,18 @@ export const PitchProvider = ({ children }: { children: ReactNode }) => {
     setPitches(prev => prev.filter(p => p.id !== id));
   };
 
+  const updatePitch = (id: string, updatedPitch: Pitch) => {
+    setPitches(prev =>
+      prev.map(p => (p.id === id ? { ...p, ...updatedPitch } : p))
+    );
+  };
+
   const clearPitches = () => {
     setPitches([]);
   };
 
   return (
-    <PitchContext.Provider value={{ pitches, addPitch, removePitch, clearPitches }}>
+    <PitchContext.Provider value={{ pitches, addPitch, removePitch, updatePitch, clearPitches }}>
       {children}
     </PitchContext.Provider>
   );
