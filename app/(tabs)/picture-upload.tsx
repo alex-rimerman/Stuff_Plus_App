@@ -61,7 +61,7 @@ export default function PictureUpload() {
     formData.append("fb_hmov", fbHMOV);
 
     try {
-      const res = await fetch("https://stuff-plus-app.onrender.com/upload_screenshot/", {
+      const res = await fetch("https://stuff-plus-app.onrender.com/upload_screenshot", {
         method: "POST",
         body: formData,
         headers: { "Content-Type": "multipart/form-data" },
