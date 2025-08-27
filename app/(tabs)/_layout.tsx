@@ -53,6 +53,15 @@ export default function TabLayout() {
         })}
       />
       <Tabs.Screen
+        name="picture-upload"
+        options={{
+          title: "Upload Screenshot",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="photo.fill" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="visualizer"
         options={{
           title: 'Visualizer',

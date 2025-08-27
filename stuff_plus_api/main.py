@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Form
 from pydantic import BaseModel
 from model_loader import load_model
 from stuffPlusModel import aStuffPlusModel  # must import before loading
@@ -56,7 +56,15 @@ def predict(input: PitchInput):
 
     return {"stuffPlus": float(stuff_plus), "percentile": float(percentile)}
 
-# ===== OCR helper for TrackMan screenshots =====
+def tilt_to_degrees(tilt: str) -> float:
+    if not tilt or ":" not in tilt:
+        return 180.0
+    hour, minute = tilt.split(":")
+    hour, minute = int(hour), int(minute)
+    total_minutes = (hour % 12) * 60 + minute
+    degrees = total_minutes * 0.5
+    return (degrees + 180) % 360  # 12:00 = 180
+
 def extract_trackman_metrics(image_bytes):
     image = Image.open(io.BytesIO(image_bytes))
     text = pytesseract.image_to_string(image)
@@ -73,32 +81,35 @@ def extract_trackman_metrics(image_bytes):
         "release_side": get(r"RELEASE SIDE\s+([-+]?\d+)"),
         "extension": get(r"EXTENSION\s+([\d']+)"),
         "spin": float(get(r"TOTAL SPIN\s+([\d.]+)") or 0),
-        "active_spin": float(get(r"ACTIVE SPIN\s+([\d.]+)") or 0),
-        "efficiency": float(get(r"EFFICIENCY\s+([\d.]+)") or 0),
+        "tilt": get(r"MEASURED TILT\s+(\d+:\d+)")  # OCR tilt
     }
 
-
-# ===== New endpoint for screenshot upload =====
 @app.post("/upload_screenshot/")
-async def upload_screenshot(file: UploadFile = File(...)):
+async def upload_screenshot(
+    file: UploadFile = File(...),
+    pitchType: str = Form(...),
+    handedness: str = Form(...),         # R or L
+    fb_velo: float = Form(...),          # reference fastball velo
+    fb_ivb: float = Form(...),           # reference fastball IVB
+    fb_hmov: float = Form(...)           # reference fastball HB
+):
     contents = await file.read()
     metrics = extract_trackman_metrics(contents)
 
-    # ⚠️ Example mapping from TrackMan → your PitchInput schema
     pitch_input = PitchInput(
-        pitchType="FF",  # Could add detection later
+        pitchType=pitchType,  
         release_speed=metrics["velo"],
-        handedness="R",  # Assume R for now, could be selectable
-        pfx_x=metrics["hb"],  # in inches
-        pfx_z=metrics["ivb"],  # in inches
+        handedness=handedness,  
+        pfx_x=metrics["hb"],
+        pfx_z=metrics["ivb"],
         release_extension=float(metrics["extension"].replace("'", "")) if metrics["extension"] else 5.5,
         release_spin_rate=metrics["spin"],
-        spin_axis=180.0,  # TrackMan tilt not OCR’d reliably → placeholder
+        spin_axis=tilt_to_degrees(metrics["tilt"]) if metrics["tilt"] else 180.0,
         release_pos_x=float(metrics["release_side"].replace('"', "")) / 12 if metrics["release_side"] else -1.5,
         release_pos_z=float(metrics["release_height"].replace("'", "")) if metrics["release_height"] else 5.5,
-        fb_velo=metrics["velo"],  # use this pitch as fb for now
-        fb_ivb=metrics["ivb"],
-        fb_hmov=metrics["hb"]
+        fb_velo=fb_velo,
+        fb_ivb=fb_ivb,
+        fb_hmov=fb_hmov
     )
 
     stuff_plus = model.predict_single_pitch(
@@ -122,6 +133,13 @@ async def upload_screenshot(file: UploadFile = File(...)):
 
     return {
         "parsed_metrics": metrics,
+        "pitchType": pitchType,
+        "handedness": handedness,
+        "fb_reference": {
+            "velo": fb_velo,
+            "ivb": fb_ivb,
+            "hmov": fb_hmov
+        },
         "stuffPlus": float(stuff_plus),
         "percentile": float(percentile)
     }
