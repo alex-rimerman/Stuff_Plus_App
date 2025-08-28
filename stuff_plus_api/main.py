@@ -84,7 +84,7 @@ def extract_trackman_metrics(image_bytes):
         "tilt": get(r"MEASURED TILT\s+(\d+:\d+)")  # OCR tilt
     }
 
-@app.post("/upload_screenshot/")
+@app.post("/upload_screenshot")
 async def upload_screenshot(
     file: UploadFile = File(...),
     pitchType: str = Form(...),
