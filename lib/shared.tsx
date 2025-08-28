@@ -109,16 +109,41 @@ export const samplePitches: PitchInput[] = [
   },
 ];
 
-// --- Backend API call ---
+// lib/shared.ts
+
+// --- Backend API call (updated) ---
 export async function getStuffPlusAPI(
-  pitch: PitchInput
+  pitch: PitchInput,
+  file?: File | { uri: string; name: string; type: string } // optional screenshot
 ): Promise<StuffPlusResult> {
   try {
-    const response = await fetch("https://stuff-plus-app.onrender.com/predict", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(pitch),
-    });
+    let response;
+
+    if (file) {
+      // Upload screenshot version
+      const formData = new FormData();
+      formData.append("file", file as any); // React Native FormData type workaround
+      formData.append("pitchType", pitch.pitchType);
+      formData.append("handedness", pitch.handedness);
+      formData.append("fb_velo", pitch.fb_velo.toString());
+      formData.append("fb_ivb", pitch.fb_ivb.toString());
+      formData.append("fb_hmov", pitch.fb_hmov.toString());
+
+      response = await fetch(
+        "https://stuff-plus-api.onrender.com/upload_screenshot",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+    } else {
+      // Normal JSON predict
+      response = await fetch("https://stuff-plus-api.onrender.com/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pitch),
+      });
+    }
 
     if (!response.ok) {
       throw new Error(`API error: ${response.statusText}`);
@@ -127,7 +152,7 @@ export async function getStuffPlusAPI(
     const data = await response.json();
 
     return {
-      stuffPlus: data.stuffPlus ?? calculateStuffPlus(pitch), // fallback if API fails
+      stuffPlus: data.stuffPlus ?? calculateStuffPlus(pitch),
       percentile:
         data.percentile ??
         stuffPlusToPercentile(data.stuffPlus ?? calculateStuffPlus(pitch)),
@@ -142,3 +167,4 @@ export async function getStuffPlusAPI(
     };
   }
 }
+
